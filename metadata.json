@@ -1,0 +1,5 @@
+{
+  "name": "Course Summarizer AI",
+  "description": "An AI-powered tool to automatically generate concise summary sheets and quizzes from images, PDFs, or PowerPoint files of your course notes or textbook pages.",
+  "requestFramePermissions": []
+}
