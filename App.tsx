@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { FileUploader } from './components/ImageUploader';
 import { SummaryDisplay } from './components/SummaryDisplay';
 import { Loader } from './components/Loader';
 import { ErrorMessage } from './components/ErrorMessage';
 import { WelcomeSplash } from './components/WelcomeSplash';
-import { generateSummaryFromFile } from './services/geminiService';
+import { generateSummaryFromFile, generateLogoImage, generateWelcomeImage } from './services/geminiService';
 import type { SummaryData } from './types';
 
 const App: React.FC = () => {
@@ -16,6 +16,39 @@ const App: React.FC = () => {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [sequenceNumber, setSequenceNumber] = useState<string>('');
+  const [activityNumber, setActivityNumber] = useState<string>('');
+  
+  const [welcomeImageUrl, setWelcomeImageUrl] = useState<string | null>(null);
+  const [isWelcomeImageLoading, setIsWelcomeImageLoading] = useState<boolean>(true);
+  const [welcomeImageError, setWelcomeImageError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const createLogo = async () => {
+      try {
+        const url = await generateLogoImage();
+        setLogoUrl(url);
+      } catch (err) {
+        console.error("Failed to generate logo:", err);
+      }
+    };
+    const createWelcomeImage = async () => {
+      try {
+        const url = await generateWelcomeImage();
+        setWelcomeImageUrl(url);
+      } catch (err) {
+        console.error(err);
+        setWelcomeImageError(err instanceof Error ? err.message : 'Failed to load image.');
+      } finally {
+        setIsWelcomeImageLoading(false);
+      }
+    };
+
+    createLogo();
+    createWelcomeImage();
+  }, []);
+
 
   const handleFileUpload = useCallback((file: File, type: 'course' | 'td') => {
     if (type === 'course') {
@@ -68,7 +101,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-800">
-      <Header />
+      <Header logoUrl={logoUrl} />
       <main className="flex-grow container mx-auto p-4 md:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Panel */}
@@ -90,6 +123,38 @@ const App: React.FC = () => {
                   uploadedFile={tdFile}
                   isLoading={isLoading}
                 />
+                
+                <h2 className="text-2xl font-bold text-slate-700">3. Identifiez l'activité (Optionnel)</h2>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="sequence" className="block text-sm font-medium text-slate-600 mb-1">
+                            Séquence
+                        </label>
+                        <input
+                            type="text"
+                            id="sequence"
+                            value={sequenceNumber}
+                            onChange={(e) => setSequenceNumber(e.target.value)}
+                            placeholder="Ex: 1"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-lime-500 focus:border-lime-500 transition-colors"
+                            disabled={isLoading}
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="activity" className="block text-sm font-medium text-slate-600 mb-1">
+                            Activité
+                        </label>
+                        <input
+                            type="text"
+                            id="activity"
+                            value={activityNumber}
+                            onChange={(e) => setActivityNumber(e.target.value)}
+                            placeholder="Ex: 1"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-lime-500 focus:border-lime-500 transition-colors"
+                            disabled={isLoading}
+                        />
+                    </div>
+                </div>
               </div>
             )}
 
@@ -120,8 +185,8 @@ const App: React.FC = () => {
               </div>
             )}
             {error && <ErrorMessage message={error} />}
-            {summaryData && !isLoading && <SummaryDisplay data={summaryData} />}
-            {!summaryData && !isLoading && !error && <WelcomeSplash />}
+            {summaryData && !isLoading && <SummaryDisplay data={summaryData} logoUrl={logoUrl} sequenceNumber={sequenceNumber} activityNumber={activityNumber} welcomeImageUrl={welcomeImageUrl}/>}
+            {!summaryData && !isLoading && !error && <WelcomeSplash imageUrl={welcomeImageUrl} isLoading={isWelcomeImageLoading} error={welcomeImageError} />}
           </div>
         </div>
       </main>

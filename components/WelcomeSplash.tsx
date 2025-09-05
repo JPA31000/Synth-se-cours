@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { generateWelcomeImage } from '../services/geminiService';
+import React from 'react';
 
 // Fallback component in case image generation fails
 const FallbackSplash: React.FC = () => (
@@ -16,26 +15,13 @@ const FallbackSplash: React.FC = () => (
     </div>
 );
 
-export const WelcomeSplash: React.FC = () => {
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+interface WelcomeSplashProps {
+  imageUrl: string | null;
+  isLoading: boolean;
+  error: string | null;
+}
 
-    useEffect(() => {
-        const createImage = async () => {
-            try {
-                const url = await generateWelcomeImage();
-                setImageUrl(url);
-            } catch (err) {
-                console.error(err);
-                setError(err instanceof Error ? err.message : 'Failed to load image.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        createImage();
-    }, []);
+export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({ imageUrl, isLoading, error }) => {
 
     if (isLoading) {
         return (
